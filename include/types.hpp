@@ -117,5 +117,18 @@ enum class VpdTarget
         CacheAndHardware = 2
 };
 
+using IpzKeywordInfo = std::tuple<Keyword, BinaryVector, bool, bool, Record, Keyword>;
+
+/** Map of the records to list of keywords and its related data.
+ * {Record : {Keyword, Default value, Is PEL required on restore failure,
+ * Is MFG reset required, Backup record name, Backup keyword name }}
+ */
+using IBMIpzBackupMap =
+    std::unordered_map<Record, std::vector<IpzKeywordInfo>>;
+
+using BackupMapVariant = std::variant<std::monostate, IBMIpzBackupMap>;
+
+using BackupMap = std::unordered_map<std::string, BackupMapVariant>;
+
 } // namespace types
 } // namespace vpd

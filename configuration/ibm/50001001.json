@@ -25,6 +25,10 @@
             }
         }
     },
+    "backupAndRestore": {
+        "PrimaryHardwarePath": "/sys/bus/i2c/drivers/at24/8-0050/eeprom",
+        "BackupMap": "IBMSystemBackupMap"
+    },
     "frus": {
         "/sys/bus/i2c/drivers/at24/8-0050/eeprom": [
             {

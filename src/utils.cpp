@@ -764,5 +764,19 @@ bool executePreAction(const nlohmann::json& i_parsedConfigJson,
 
     return true;
 }
+
+std::string getInventoryPath(const nlohmann::json& i_parsedConfigJson,
+                             const std::string& i_vpdFilePath)
+{
+    if (!i_parsedConfigJson.empty() &&
+        i_parsedConfigJson["frus"].contains(i_vpdFilePath))
+    {
+        return i_parsedConfigJson["frus"][i_vpdFilePath].at(0).value(
+            "inventoryPath", "");
+    }
+    throw JsonException(
+        "InventoryPath path missing in JSON for VPD file path: ",
+        i_vpdFilePath);
+}
 } // namespace utils
 } // namespace vpd

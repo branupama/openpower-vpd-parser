@@ -479,10 +479,9 @@ void Worker::setDeviceTreeAndJson()
     if (fitConfigVal.find(devTreeFromJson) != std::string::npos)
     { // fitconfig is updated and correct JSON is set.
 
-        if (isSystemVPDOnDBus())
+        if (isSystemVPDOnDBus() && getSecondaryHwPath().empty())
         {
-            // TODO
-            //  Restore system VPD logic should initiate from here.
+            backupAndRestore(parsedVpdMap);
         }
 
         // proceed to publish system VPD.
@@ -1182,6 +1181,293 @@ void Worker::collectFrusFromJson()
         {
             logging::logMessage("Processing passed for = " +
                                 std::get<1>(threadInfo));
+        }
+    }
+}
+
+std::string Worker::getPrimaryHwPath()
+{
+    if (m_parsedJson.contains("backupAndRestore"))
+    {
+        return m_parsedJson["backupAndRestore"].value("PrimaryHardwarePath",
+                                                      "");
+    }
+    return std::string{};
+}
+
+std::string Worker::getSecondaryHwPath()
+{
+    if (m_parsedJson.contains("backupAndRestore"))
+    {
+        return m_parsedJson["backupAndRestore"].value("SecondaryHardwarePath",
+                                                      "");
+    }
+    return std::string{};
+}
+
+types::BackupMapVariant Worker::getBackupMap()
+{
+    if (m_parsedJson.contains("backupAndRestore"))
+    {
+        const std::string& l_backupMap =
+            m_parsedJson["backupAndRestore"].value("BackupMap", "");
+        if (constants::VpdBackupMap.find(l_backupMap) !=
+            constants::VpdBackupMap.end())
+        {
+            return constants::VpdBackupMap.at(l_backupMap);
+        }
+    }
+    return std::monostate{};
+}
+
+void Worker::backupAndRestore(types::VPDMapVariant& io_parsedVpdMap)
+{
+    logging::logMessage("BackupAndRestore is Started.");
+    const std::string& l_primaryHwPath = getPrimaryHwPath();
+    const std::string& l_secondaryHwPath = getSecondaryHwPath();
+
+    if (l_primaryHwPath.empty() && l_secondaryHwPath.empty())
+    {
+        logging::logMessage(
+            "Both primary and secondary path's are empty, can't initiate BackupAndRestore.");
+        return;
+    }
+
+    auto l_backupMap = getBackupMap();
+    if (std::holds_alternative<std::monostate>(l_backupMap))
+    {
+        logging::logMessage(
+            "Couldn't find system specific backup map, can't initiate BackupAndRestore.");
+        return;
+    }
+
+    types::VPDMapVariant l_parsedPrimaryVpdMap;
+    if (!l_primaryHwPath.empty())
+    {
+        fillVPDMap(l_primaryHwPath, l_parsedPrimaryVpdMap);
+    }
+
+    types::VPDMapVariant l_parsedSecVpdMap;
+    if (!l_secondaryHwPath.empty())
+    {
+        fillVPDMap(l_secondaryHwPath, l_parsedSecVpdMap);
+    }
+
+    if (!l_primaryHwPath.empty() && !l_secondaryHwPath.empty() &&
+        l_parsedPrimaryVpdMap.index() != l_parsedSecVpdMap.index())
+    {
+        logging::logMessage(
+            "Primary and secondary VPD types are not matching.");
+        return;
+    }
+
+    // Implement backup and restore for ipz type VPD
+    if ((std::holds_alternative<types::IPZVpdMap>(l_parsedPrimaryVpdMap) ||
+         std::holds_alternative<types::IPZVpdMap>(l_parsedSecVpdMap)) &&
+        std::holds_alternative<types::IBMIpzBackupMap>(l_backupMap))
+    {
+        backupAndRestoreIpzVpd(io_parsedVpdMap, l_backupMap,
+                               l_parsedPrimaryVpdMap, l_parsedSecVpdMap);
+    }
+    else if (std::holds_alternative<types::KeywordVpdMap>(
+                 l_parsedPrimaryVpdMap) ||
+             std::holds_alternative<types::KeywordVpdMap>(l_parsedSecVpdMap))
+    {
+        // To Do, handle implementation for Keyword type VPD
+    }
+}
+
+void Worker::backupAndRestoreIpzVpd(
+    types::VPDMapVariant& io_parsedVpdMap,
+    types::BackupMapVariant& i_backupInfoMap,
+    types::VPDMapVariant& i_primaryVpdMap,
+    types::VPDMapVariant& i_secondaryVpdMap)
+{
+    bool l_isParsedMapEmpty = true;
+    types::IPZVpdMap* l_parsedVpdMap = nullptr;
+    types::IBMIpzBackupMap* l_backupInfoMap = nullptr;
+    if (std::holds_alternative<types::IBMIpzBackupMap>(i_backupInfoMap))
+    {
+        l_backupInfoMap = std::get_if<types::IBMIpzBackupMap>(&i_backupInfoMap);
+        if (std::holds_alternative<types::IPZVpdMap>(io_parsedVpdMap))
+        {
+            l_parsedVpdMap = std::get_if<types::IPZVpdMap>(&io_parsedVpdMap);
+            l_isParsedMapEmpty = false;
+        }
+        else if (!std::holds_alternative<std::monostate>(io_parsedVpdMap))
+        {
+            logging::logMessage("Parsed VPD is not of IPZ type.");
+            return;
+        }
+    }
+    else
+    {
+        logging::logMessage("The backup map is not IPZ type.");
+        return;
+    }
+
+    types::IPZVpdMap* l_primaryVpdMap = nullptr;
+    if (std::holds_alternative<types::IPZVpdMap>(i_primaryVpdMap))
+    {
+        l_primaryVpdMap = std::get_if<types::IPZVpdMap>(&i_primaryVpdMap);
+    }
+    else if (!std::holds_alternative<std::monostate>(i_primaryVpdMap))
+    {
+        logging::logMessage("Primary VPD is not of IPZ type.");
+        return;
+    }
+
+    types::IPZVpdMap* l_secondaryVpdMap = nullptr;
+    if (std::holds_alternative<types::IPZVpdMap>(i_secondaryVpdMap))
+    {
+        l_secondaryVpdMap = std::get_if<types::IPZVpdMap>(&i_secondaryVpdMap);
+    }
+    else if (!std::holds_alternative<std::monostate>(i_secondaryVpdMap))
+    {
+        logging::logMessage("Secondary VPD is not of IPZ type.");
+        return;
+    }
+
+    const std::string& l_primaryHwPath = getPrimaryHwPath();
+    const std::string& l_secondaryHwPath = getSecondaryHwPath();
+
+    for (const auto& l_recordKwInfo : *l_backupInfoMap)
+    {
+        const std::string& l_recordName = l_recordKwInfo.first;
+        if (!l_isParsedMapEmpty &&
+            (*l_parsedVpdMap).find(l_recordName) == (*l_parsedVpdMap).end())
+        {
+            logging::logMessage("Record: " + l_recordName +
+                                ", is not found in the parsed VPD map.");
+            continue;
+        }
+
+        const auto& l_kwInfoList = l_recordKwInfo.second;
+        for (const auto& l_keywordInfo : l_kwInfoList)
+        {
+            const std::string& l_keyword = get<0>(l_keywordInfo);
+            const auto& l_defaultBinaryValue = get<1>(l_keywordInfo);
+            bool l_isPelRequired = get<2>(l_keywordInfo);
+
+            std::string l_primaryStrValue;
+            types::BinaryVector l_primaryBinaryValue;
+            std::string l_invPathForPrimary;
+            if (l_primaryVpdMap)
+            {
+                if ((*l_primaryVpdMap).find(l_recordName) ==
+                    (*l_primaryVpdMap).end())
+                {
+                    logging::logMessage("Record: " + l_recordName +
+                                        ", is not found in the primary path: " +
+                                        l_primaryHwPath);
+                    continue;
+                }
+                utils::getKwVal((*l_primaryVpdMap).at(l_recordName), l_keyword,
+                                l_primaryStrValue);
+                l_primaryBinaryValue = types::BinaryVector(
+                    l_primaryStrValue.begin(), l_primaryStrValue.end());
+                l_invPathForPrimary = utils::getInventoryPath(m_parsedJson,
+                                                              l_primaryHwPath);
+            }
+            else
+            {
+                l_invPathForPrimary =
+                    utils::getInventoryPath(m_parsedJson, l_secondaryHwPath);
+                // Uncomment when readKeyword API implemenation is done
+                // l_primaryBinaryValue =
+                // utils::readKeyword(l_invPathForPrimary,
+                // std::tuple<types::Record, types::Keyword>(l_recordName,
+                // l_keyword), 0);
+                l_primaryStrValue = std::string(l_primaryBinaryValue.begin(),
+                                                l_primaryBinaryValue.end());
+            }
+
+            std::string l_secondaryStrValue;
+            types::BinaryVector l_secondaryBinaryValue;
+            std::string l_invPathForSecondary;
+            if (l_secondaryVpdMap)
+            {
+                if ((*l_secondaryVpdMap).find(l_recordName) ==
+                    (*l_secondaryVpdMap).end())
+                {
+                    logging::logMessage(
+                        "Record: " + l_recordName +
+                        ", is not found in the secondary path: " +
+                        l_secondaryHwPath);
+                    continue;
+                }
+                utils::getKwVal((*l_secondaryVpdMap).at(l_recordName),
+                                l_keyword, l_secondaryStrValue);
+                l_secondaryBinaryValue = types::BinaryVector(
+                    l_secondaryStrValue.begin(), l_secondaryStrValue.end());
+                l_invPathForSecondary =
+                    utils::getInventoryPath(m_parsedJson, l_secondaryHwPath);
+            }
+            else
+            {
+                l_invPathForSecondary =
+                    utils::getInventoryPath(m_parsedJson, l_primaryHwPath);
+                // Uncomment when readKeyword API implemenation goes in
+                // l_secondaryBinaryValue =
+                // utils::readKeyword(l_invPathForSecondary,
+                // std::tuple<types::Record, types::Keyword>(l_recordName,
+                // l_keyword), 0);
+                l_secondaryStrValue =
+                    std::string(l_secondaryBinaryValue.begin(),
+                                l_secondaryBinaryValue.end());
+            }
+
+            if (l_primaryBinaryValue == l_defaultBinaryValue &&
+                l_secondaryBinaryValue == l_defaultBinaryValue)
+            {
+                if (l_isPelRequired)
+                {
+                    logging::logMessage(
+                        "Default value found in the primary and secondary VPD, for record: " +
+                        l_recordName + " and keyword: " + l_keyword);
+                }
+                continue;
+            }
+            else if (l_primaryBinaryValue == l_defaultBinaryValue &&
+                     l_secondaryBinaryValue != l_defaultBinaryValue)
+            {
+                // Uncomment when writeKeyword API implemenation goes in
+                // utils::writeKeyword(l_invPathForPrimary,
+                // types::IpzData(l_recordName, l_keyword,
+                // l_secondaryBinaryValue));
+                if (!l_isParsedMapEmpty && l_secondaryHwPath.empty())
+                {
+                    (*l_parsedVpdMap)[l_recordName][l_keyword] =
+                        l_secondaryStrValue;
+                }
+            }
+            else if (l_secondaryBinaryValue == l_defaultBinaryValue &&
+                     l_primaryBinaryValue != l_defaultBinaryValue)
+            {
+                // Uncomment when writeKeyword API implemenation goes in
+                // utils::writeKeyword(l_invPathForSecondary,
+                // types::IpzData(l_recordName, l_keyword,
+                // l_primaryBinaryValue));
+            }
+            else if (l_primaryBinaryValue != l_secondaryBinaryValue)
+            {
+                if (!l_isParsedMapEmpty && l_secondaryHwPath.empty())
+                {
+                    (*l_parsedVpdMap)[l_recordName][l_keyword] =
+                        l_secondaryStrValue;
+                }
+
+                // Uncomment when PEL implementation goes in.
+                /*inventory::PelAdditionalData additionalData{};
+                string errMsg = "Mismatch found between primary and secondary
+                VPD for record: " + l_recordName + " and keyword: " + l_keyword;
+                additionalData.emplace("DESCRIPTION", errMsg);
+                additionalData.emplace("Value read from Secondary: ",
+                l_secondaryStrValue); additionalData.emplace("Value read from
+                Primary: ", l_primaryStrValue); createPEL(additionalData,
+                PelSeverity::WARNING, errIntfForVPDMismatch, nullptr);
+                */
+            }
         }
     }
 }

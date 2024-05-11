@@ -107,6 +107,11 @@ void Manager::SetTimerToDetectSVPDOnDbus()
             // cancel the timer
             timer.cancel();
             m_worker->collectFrusFromJson();
+            if (!m_worker->getSecondaryHwPath().empty())
+            {
+                types::VPDMapVariant l_vpdMap;
+                m_worker->backupAndRestore(l_vpdMap);
+            }
         }
     });
 }

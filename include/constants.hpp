@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.hpp"
+
 #include <cstdint>
 #include <iostream>
 namespace vpd
@@ -93,5 +95,63 @@ static constexpr auto BD_HOUR_END = 13;
 
 // To be explicitly used for string comparision.
 static constexpr auto STR_CMP_SUCCESS = 0;
+
+/** Map holds the IBM system IPZ VPD keywords info which can be
+ * restored at standby and also can be used to reset keywords to its
+ * defaults at manufacturing.
+ * {Record:{Keyword, Default value, Is PEL required on restore failure,
+ * Is MFG reset required, Backup record name, Backup keyword name }}
+ */
+static const types::IBMIpzBackupMap IBMSystemIpzBackupMap{
+    {"VSYS",
+     {types::IpzKeywordInfo("BR", {0x20, 0x20}, true, true, "VSBK", "BR"),
+      types::IpzKeywordInfo("TM",
+                            {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20},
+                            true, true, "VSBK", "TM"),
+      types::IpzKeywordInfo("SE", {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20},
+                            true, true, "VSBK", "SE"),
+      types::IpzKeywordInfo("SU", {0x20, 0x20, 0x20, 0x20, 0x20, 0x20}, true,
+                            true, "VSBK", "SU"),
+      types::IpzKeywordInfo("RB", {0x20, 0x20, 0x20, 0x20}, true, true, "VSBK",
+                            "RB"),
+      types::IpzKeywordInfo("WN",
+                            {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+                             0x20, 0x20, 0x20, 0x20},
+                            true, true, "VSBK", "WN"),
+      types::IpzKeywordInfo("RG", {0x20, 0x20, 0x20, 0x20}, true, true, "VSBK",
+                            "RG"),
+      types::IpzKeywordInfo("FV",
+                            {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+                             0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+                             0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+                             0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20},
+                            false, true, "VSBK", "FV")}},
+    {"VCEN",
+     {types::IpzKeywordInfo("FC",
+                            {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20},
+                            true, false, "VSBK", "FC"),
+      types::IpzKeywordInfo("SE", {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20},
+                            true, true, "VSBK", "ES")}},
+    {"LXR0",
+     {types::IpzKeywordInfo("LX",
+                            {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                            true, false, "VSBK", "LX")}},
+    {"UTIL",
+     {types::IpzKeywordInfo("D0", {0x00}, true, true, "VSBK", "D0"),
+      types::IpzKeywordInfo("D1", {0x00}, false, true, "VSBK", "D1"),
+      types::IpzKeywordInfo("F0",
+                            {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                            false, true, "VSBK", "F0"),
+      types::IpzKeywordInfo("F5",
+                            {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                            false, true, "VSBK", "F5"),
+      types::IpzKeywordInfo("F6",
+                            {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                            false, true, "VSBK", "F6")}}};
+
+// Holds the different system specific VPD backup information map.
+static const types::BackupMap VpdBackupMap{{"IBMSystemBackupMap", IBMSystemIpzBackupMap}};
 } // namespace constants
 } // namespace vpd

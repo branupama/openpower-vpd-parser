@@ -358,5 +358,15 @@ bool executePreAction(const nlohmann::json& i_parsedConfigJson,
                       const std::string& i_vpdFilePath,
                       const std::string& i_flagToProcess);
 
+/**
+ * @brief Get inventory path for EEPROM file path in config JSON.
+ *
+ * @param[in] i_parsedConfigJson - config JSON.
+ * @param[in] i_vpdFilePath - EEPROM file path.
+ * @return - Inventory path of EEPROM file, exception thrown in case not found.
+ */
+std::string getInventoryPath(const nlohmann::json& i_parsedConfigJson,
+                             const std::string& i_vpdFilePath);
+
 } // namespace utils
 } // namespace vpd

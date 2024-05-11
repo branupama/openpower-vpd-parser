@@ -100,6 +100,31 @@ class Worker
                       types::ObjectMap& objectInterfaceMap,
                       const std::string& vpdFilePath);
 
+    /**
+     * @brief An API to Restore and Backup VPD.
+     *
+     * Note: This API works on set of pre-declared keywords to,
+     *
+     * Restore primary keyword value with secondary keyword value,
+     * when primary keyword has default value but
+     * secondary has non default value.
+     *
+     * Backup the primary keyword value on secondary,
+     * when primary keyword has non default value but
+     * secondary has default value.
+     *
+     * @param[in,out] io_parsedVpdMap - Parsed VPD map.
+     */
+    void backupAndRestore(types::VPDMapVariant& io_parsedVpdMap);
+
+    /**
+     * @brief An API to get secondary EEPROM file path.
+     *
+     * @return path, secondary EEPROM file path if present in the
+     * config JSON, empty otherwise.
+     */
+    std::string getSecondaryHwPath();
+
   private:
     /**
      * @brief An API to parse and publish a FRU VPD over D-Bus.
@@ -356,5 +381,52 @@ class Worker
 
     // Path to config JSON if applicable.
     std::string& m_configJsonPath;
+
+    /**
+     * @brief An API to get system specific backup map.
+     *
+     * Note: Backup Map contains the keywords which needs to be
+     * backed up in the system and its related information.
+     */
+    types::BackupMapVariant getBackupMap();
+
+    /**
+     * @brief An API to restore and backup IPZ VPD.
+     *
+     * Note: This API works on the set of pre-declared keywords.
+     * Restore or backup action could be triggered for each keyword,
+     * based on the value present for the primary and secondary
+     * record's keyword.
+     *
+     * Restore the primary keyword value with secondary keyword value,
+     * when the primary keyword has default value but
+     * secondary has non default value.
+     *
+     * Backup the primary keyword value on secondary,
+     * when the primary keyword has non default value but
+     * secondary has default value.
+     *
+     * @param[in,out] io_parsedVpdMap - Parsed VPD map if present, otherwise
+     * std::monostate.
+     * @param[in] i_backupInfoMap - System specific backup map.
+     * @param[in] i_primaryVpdMap - Parsed primary VPD map if primary
+     * hardware path is present in the config JSON,
+     * otherwise std::monostate.
+     * @param[in] i_secondaryVpdMap - Parsed secondary VPD map if
+     * secondary hardware path is present in the config JSON,
+     * otherwise std::monostate.
+     */
+    void backupAndRestoreIpzVpd(types::VPDMapVariant& io_parsedVpdMap,
+                                types::BackupMapVariant& i_backupInfoMap,
+                                types::VPDMapVariant& i_primaryVpdMap,
+                                types::VPDMapVariant& i_secondaryVpdMap);
+
+    /**
+     * @brief An API to get primary EEPROM file path.
+     *
+     * @return path, primary EEPROM file path if present in the
+     * config JSON, empty otherwise.
+     */
+    std::string getPrimaryHwPath();
 };
 } // namespace vpd
