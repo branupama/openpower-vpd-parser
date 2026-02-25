@@ -23,23 +23,23 @@ Note: currently only IPZ VPD's backup and restore is supported.
 This section allows us to list system VPD keywords needs to be backup or restored. This section contains list of source/destination record/keyword details.
 
 ### sourceRecord
-Contains source record name in case if its IPZ type.
+Contains source record name.
 
 ### sourceKeyword
 Contains source keyword name.
 
 ### destinationRecord
-Contains source record name in case if its IPZ type.
+Contains source record name.
 
 ### destinationKeyword
-Contains the destination keyword name
+Contains the destination keyword name.
 
 ### defaultValue
-Contains default value for this particular record's keyword.
+Contains default value for the keyword.
 
 ### isPelRequired
-Flag to specify log a PEL is required if default value found on the source and destination for this keyword.
+Flag to specify whether to log a PEL is required if default value found on both the source and destination keyword.
 
 ### isManufactureResetRequired
-This flag will be used with vpd-tool with mfgClean command to reset the keyword value to default.
+This flag will be used with vpd-tool with mfgClean command to reset the keyword value to its default.
 
