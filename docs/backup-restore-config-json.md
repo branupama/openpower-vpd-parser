@@ -28,7 +28,7 @@ It must contain either:
 ## type
 Specifies the VPD format (e.g., IPZ or keyword-based VPD).
 
-Note: Currently only IPZ format is supported for backup/restore.
+> **Note:** Currently only IPZ format is supported for backup/restore.
 
 ## backupMap
 Defines the list of VPD records and keywords that must be backed up or restored.
