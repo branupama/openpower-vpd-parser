@@ -1,45 +1,62 @@
 # Backup and Restore Config JSON File Documentation
-
-This README documents the purpose, structure, and usage of backup and restore JSON files
-used for backing up or restoring the system VPD. It includes descriptions of mandatory fields, expected
-formats, and examples to understand and extend VPD for system.
+This document describes the structure and usage of the JSON configuration file used for
+backing up and restoring system VPD (Vital Product Data). It explains required fields,
+value formats, and provides guidance for extending VPD handling for system use.
 
 ---
 
 ## source
-This section specifies where the source/main system VPD resides, it is the mandatory field for backup and restore.
-This section will have hardwarePath or inventoryPath of the source. 
+Specifies the location of the primary system VPD.
+This section is mandatory for both backup and restore operations.
+
+It must contain either:
+
+* hardwarePath — physical FRU VPD EEPROM path, or
+
+* inventoryPath — D-Bus inventory object path
 
 ## destination
-This section specifies where the system VPD is backed up, it is the mandatory field for backup and restore.
-This section contains either hardwarePath or inventoryPath of the destination. If destination has inventoryPath which means backup is present on the
-BMC cache otherwise if its a hardwarePath which means system VPD is backed up on another FRU's EEPROM.
+Specifies where the VPD backup is stored.
+This section is mandatory for both backup and restore operations..
+
+It must contain either:
+
+* an inventoryPath, the backup is stored in the BMC cache.
+
+* a hardwarePath, the backup is stored on another FRU’s EEPROM.
 
 ## type
-This section specifies the VPD format, represents its IPZ or keyword VPD type.
-Note: currently only IPZ VPD's backup and restore is supported.
+Specifies the VPD format (e.g., IPZ or keyword-based VPD).
+
+Note: Currently only IPZ format is supported for backup/restore.
 
 ## backupMap
-This section allows us to list system VPD keywords needs to be backup or restored. This section contains list of source/destination record/keyword details.
+Defines the list of VPD records and keywords that must be backed up or restored.
+Each entry describes the source and destination mapping.
 
 ### sourceRecord
-Contains source record name.
+Record name in the source VPD.
 
 ### sourceKeyword
-Contains source keyword name.
+Keyword name in the source record.
 
 ### destinationRecord
-Contains source record name.
+Record name in the destination VPD.
 
 ### destinationKeyword
-Contains the destination keyword name.
+Keyword name in the destination record.
 
 ### defaultValue
-Contains default value for the keyword.
+Specifies the value that should be used when comparing the source and destination keyword values.
+This value is used only for comparison, not for updating VPD.
+
+If both the source and destination VPD keywords match this defaultValue, and
+isPelRequired is set to true for this keyword, then a PEL entry will be generated.
 
 ### isPelRequired
-Flag to specify whether to log a PEL is required if default value found on both the source and destination keyword.
+If set to true, a PEL entry will be generated when both source and
+destination contain the default value.
 
 ### isManufactureResetRequired
-This flag will be used with vpd-tool with mfgClean command to reset the keyword value to its default.
+Used by vpd-tool mfgClean to reset the keyword value to its default during manufacturing cleanup.
 
