@@ -21,9 +21,9 @@ This section is mandatory for both backup and restore operations..
 
 It must contain either:
 
-* an inventoryPath, the backup is stored in the BMC cache.
+* hardwarePath, the backup is stored on another FRU’s EEPROM.
 
-* a hardwarePath, the backup is stored on another FRU’s EEPROM.
+* inventoryPath, the backup is stored in the BMC cache.
 
 ## type
 Specifies the VPD format (e.g., IPZ or keyword-based VPD).
