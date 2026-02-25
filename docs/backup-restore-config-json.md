@@ -11,7 +11,7 @@ This section is mandatory for both backup and restore operations.
 
 It must contain either:
 
-* **hardwarePath** — physical FRU VPD EEPROM path, or
+* **hardwarePath** — Physical FRU VPD EEPROM path, or
 
 * **inventoryPath** — D-Bus inventory object path
 
