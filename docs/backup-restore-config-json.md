@@ -54,9 +54,9 @@ If both the source and destination VPD keywords match this defaultValue, and
 isPelRequired is set to true for this keyword, then a PEL entry will be generated.
 
 ### isPelRequired
-This optional field allows to log a PEL when both source and
+This optional tag allows to log a PEL when both source and
 destination contains the default value.
 
 ### isManufactureResetRequired
-This optional field used by vpd-tool mfgClean to reset the keyword value to its default during manufacturing cleanup.
+This optional tag used by vpd-tool mfgClean to reset the keyword value to its default during manufacturing cleanup.
 
