@@ -11,9 +11,9 @@ This section is mandatory for both backup and restore operations.
 
 It must contain either:
 
-* **hardwarePath** — Physical FRU VPD EEPROM path, or
+* **hardwarePath** — Physical System VPD EEPROM path, or
 
-* **inventoryPath** — D-Bus inventory object path
+* **inventoryPath** — D-Bus system VPD inventory object path.
 
 ## destination
 Specifies where the VPD backup is stored.
@@ -54,9 +54,9 @@ If both the source and destination VPD keywords match this defaultValue, and
 isPelRequired is set to true for this keyword, then a PEL entry will be generated.
 
 ### isPelRequired
-If set to true, a PEL entry will be generated when both source and
-destination contain the default value.
+This optional field allows to log a PEL when both source and
+destination contains the default value.
 
 ### isManufactureResetRequired
-Used by vpd-tool mfgClean to reset the keyword value to its default during manufacturing cleanup.
+This optional field used by vpd-tool mfgClean to reset the keyword value to its default during manufacturing cleanup.
 
